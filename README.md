@@ -48,7 +48,57 @@ docker exec -it db-mysql mysql -uroot -proot testdb -e \
   PRIMARY KEY (id));"
 ```
 
-## First run your application and send a message to make it crash
+## Test commit message
+```shell script
+java -jar target/quarkus-app/quarkus-run.jar
+curl -X POST http://localhost:8080/hello -d "commit"
+```
+
+And you will see:
+```
+2022-09-13 22:00:40,993 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
+2022-09-13 22:00:41,023 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032013: Starting transaction recovery manager
+2022-09-13 22:00:41,091 INFO  [org.acm.DummyXAResourceRecovery] (main) register DummyXAResourceRecovery
+2022-09-13 22:00:41,151 INFO  [io.quarkus] (main) getting-started 1.0.0-SNAPSHOT on JVM (powered by Quarkus 2.12.1.Final) started in 0.533s. Listening on: http://0.0.0.0:8080
+2022-09-13 22:00:41,153 INFO  [io.quarkus] (main) Profile prod activated. 
+2022-09-13 22:00:41,153 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, jdbc-mysql, narayana-jta, resteasy-reactive, smallrye-context-propagation, vertx]
+2022-09-13 22:00:46,225 INFO  [org.acm.DummyXAResource] (executor-thread-0) Preparing DummyXAResource
+2022-09-13 22:00:46,264 INFO  [org.acm.DummyXAResource] (executor-thread-0) Committing DummyXAResource
+```
+
+Check the database:
+```
+mysql> select * from audit_log;
+
++-----+---------+
+| id  | message |
++-----+---------+
+|    1| commit  |
++-----+---------+
+```
+
+## Test rollback message
+```
+java -jar target/quarkus-app/quarkus-run.jar
+curl -X POST http://localhost:8080/hello -d "rollback"
+```
+
+And you will see:
+```
+2022-09-13 22:01:04,552 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
+2022-09-13 22:01:04,582 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032013: Starting transaction recovery manager
+2022-09-13 22:01:04,640 INFO  [org.acm.DummyXAResourceRecovery] (main) register DummyXAResourceRecovery
+2022-09-13 22:01:04,697 INFO  [io.quarkus] (main) getting-started 1.0.0-SNAPSHOT on JVM (powered by Quarkus 2.12.1.Final) started in 0.520s. Listening on: http://0.0.0.0:8080
+2022-09-13 22:01:04,698 INFO  [io.quarkus] (main) Profile prod activated. 
+2022-09-13 22:01:04,698 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, jdbc-mysql, narayana-jta, resteasy-reactive, smallrye-context-propagation, vertx]
+2022-09-13 22:01:40,071 INFO  [org.acm.DummyXAResource] (executor-thread-0) Rolling back DummyXAResource
+```
+
+And no new messge in the database
+
+
+## Test crash recovery
+### First run your application and send a message to make it crash
 ```shell script
 java -jar target/quarkus-app/quarkus-run.jar
 curl -X POST http://localhost:8080/hello -d "crash"
@@ -56,38 +106,60 @@ curl -X POST http://localhost:8080/hello -d "crash"
 
 And your application will crash with the following error:
 ```
-2022-09-08 22:40:15,106 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
-2022-09-08 22:40:15,166 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032013: Starting transaction recovery manager
-2022-09-08 22:40:15,360 INFO  [io.quarkus] (main) getting-started 1.0.0-SNAPSHOT on JVM (powered by Quarkus 2.12.1.Final) started in 0.608s. Listening on: http://0.0.0.0:8080
-2022-09-08 22:40:15,361 INFO  [io.quarkus] (main) Profile prod activated. 
-2022-09-08 22:40:15,361 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, jdbc-mysql, narayana-jta, resteasy-reactive, smallrye-context-propagation, vertx]
-2022-09-08 22:40:21,558 INFO  [org.acm.DummyXAResource] (executor-thread-0) Preparing DummyXAResource
-2022-09-08 22:40:21,591 INFO  [org.acm.DummyXAResource] (executor-thread-0) Committing DummyXAResource
-2022-09-08 22:40:21,592 INFO  [org.acm.DummyXAResource] (executor-thread-0) Crashing the system
+2022-09-13 22:00:40,993 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
+2022-09-13 22:00:41,023 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032013: Starting transaction recovery manager
+2022-09-13 22:00:41,091 INFO  [org.acm.DummyXAResourceRecovery] (main) register DummyXAResourceRecovery
+2022-09-13 22:00:41,151 INFO  [io.quarkus] (main) getting-started 1.0.0-SNAPSHOT on JVM (powered by Quarkus 2.12.1.Final) started in 0.533s. Listening on: http://0.0.0.0:8080
+2022-09-13 22:00:41,153 INFO  [io.quarkus] (main) Profile prod activated. 
+2022-09-13 22:00:41,153 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, jdbc-mysql, narayana-jta, resteasy-reactive, smallrye-context-propagation, vertx]
+2022-09-13 22:00:57,969 INFO  [org.acm.DummyXAResource] (executor-thread-0) Preparing DummyXAResource
+2022-09-13 22:00:57,999 INFO  [org.acm.DummyXAResource] (executor-thread-0) Committing DummyXAResource
+2022-09-13 22:00:57,999 INFO  [org.acm.DummyXAResource] (executor-thread-0) Crashing the system
+```
+
+And check the database:
+```shell script
+mysql> xa recover;
+
++----------+--------------+--------------+-------------------------------------------------------------------------+
+| formatID | gtrid_length | bqual_length | data                                                                    |
++----------+--------------+--------------+-------------------------------------------------------------------------+
+|   131077 |           35 |           36 |           ����e  ��c �~   quarkus          ����e  ��c �~                | 
++----------+--------------+--------------+-------------------------------------------------------------------------+
 
 ```
 
-## Restart your application and check the recovery
+### Restart your application and wait for the recovery happening
 ```shell script
 java -jar target/quarkus-app/quarkus-run.jar
-curl  http://localhost:8080/hello/recovery
+# you need to wait about 10 sec
 ```
+
 And you will see the following messages:
 ```
-2022-09-08 22:40:25,896 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
-2022-09-08 22:40:25,968 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032013: Starting transaction recovery manager
-2022-09-08 22:40:26,185 INFO  [io.quarkus] (main) getting-started 1.0.0-SNAPSHOT on JVM (powered by Quarkus 2.12.1.Final) started in 0.662s. Listening on: http://0.0.0.0:8080
-2022-09-08 22:40:26,187 INFO  [io.quarkus] (main) Profile prod activated. 
-2022-09-08 22:40:26,187 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, jdbc-mysql, narayana-jta, resteasy-reactive, smallrye-context-propagation, vertx]
-current audit_log entries: 0
-2022-09-08 22:40:36,238 INFO  [org.acm.DummyXAResourceRecovery] (Periodic Recovery) DummyXAResourceRecovery returning list of resources: [org.acme.DummyXAResource@311931ee]
-2022-09-08 22:40:36,241 INFO  [org.acm.DummyXAResource] (Periodic Recovery) Committing DummyXAResource
-current audit_log entries: 1
-Recovery completed successfully
-^C2022-09-08 22:40:49,973 INFO  [com.arj.ats.jbossatx] (Shutdown thread) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
-2022-09-08 22:40:49,973 INFO  [com.arj.ats.jbossatx] (Shutdown thread) ARJUNA032013: Starting transaction recovery manager
-2022-09-08 22:40:49,984 INFO  [io.quarkus] (Shutdown thread) getting-started stopped in 0.046s
+2022-09-13 21:55:59,310 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032010: JBossTS Recovery Service (tag: 518c8dd50a9ae8e70eb15dfe8fc764adcabef8ab) - JBoss Inc.
+2022-09-13 21:55:59,337 INFO  [com.arj.ats.jbossatx] (main) ARJUNA032013: Starting transaction recovery manager
+2022-09-13 21:55:59,400 INFO  [org.acm.DummyXAResourceRecovery] (main) register DummyXAResourceRecovery
+2022-09-13 21:55:59,460 INFO  [io.quarkus] (main) getting-started 1.0.0-SNAPSHOT on JVM (powered by Quarkus 2.12.1.Final) started in 0.519s. Listening on: http://0.0.0.0:8080
+2022-09-13 21:55:59,462 INFO  [io.quarkus] (main) Profile prod activated. 
+2022-09-13 21:55:59,462 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, jdbc-mysql, narayana-jta, resteasy-reactive, smallrye-context-propagation, vertx]
+2022-09-13 21:56:09,491 INFO  [org.acm.DummyXAResourceRecovery] (Periodic Recovery) DummyXAResourceRecovery returning list of resources: [org.acme.DummyXAResource@914c4c2]
+2022-09-13 21:56:09,503 INFO  [org.acm.DummyXAResource] (Periodic Recovery) Committing DummyXAResource
+```
 
+check the database;
+```shell script
+mysql> xa recover;
+Empty set (0.001 sec)
+
+mysql> select * from audit_log;
+
++-----+---------+
+| id  | message |
++-----+---------+
+|    1| commit  |
+|    3| crash   |
++-----+---------+
 ```
 
 ## Related Guides

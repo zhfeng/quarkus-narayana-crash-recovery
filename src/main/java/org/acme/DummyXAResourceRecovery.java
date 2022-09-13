@@ -22,17 +22,33 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 import javax.transaction.xa.XAResource;
 
+import io.quarkus.runtime.Startup;
 import org.jboss.logging.Logger;
 import org.jboss.tm.XAResourceRecovery;
+import org.jboss.tm.XAResourceRecoveryRegistry;
 
 /**
  * This class is used solely for simulating system crash.
  *
  */
+@Singleton
+@Startup
 public class DummyXAResourceRecovery implements XAResourceRecovery {
     private Logger LOG = Logger.getLogger(DummyXAResourceRecovery.class);
+
+    @Inject
+    XAResourceRecoveryRegistry xaResourceRecoveryRegistry;
+
+    @PostConstruct
+    void init() {
+        LOG.info("register DummyXAResourceRecovery");
+        xaResourceRecoveryRegistry.addXAResourceRecovery(this);
+    }
 
     @Override
     public XAResource[] getXAResources() throws RuntimeException {
@@ -43,7 +59,9 @@ public class DummyXAResourceRecovery implements XAResourceRecovery {
             throw new RuntimeException(e);
         }
 
-        LOG.info(DummyXAResourceRecovery.class.getSimpleName() + " returning list of resources: " + resources);
+        if (!resources.isEmpty()) {
+            LOG.info(DummyXAResourceRecovery.class.getSimpleName() + " returning list of resources: " + resources);
+        }
 
         return resources.toArray(new XAResource[]{});
     }
