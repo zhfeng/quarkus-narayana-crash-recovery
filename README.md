@@ -37,7 +37,16 @@ docker exec -it db-mysql mysql -uroot -proot -e \
    GRANT ALL ON testdb.* TO 'admin'@'%';
    GRANT XA_RECOVER_ADMIN on *.* to 'admin'@'%';
    FLUSH PRIVILEGES;"
-````
+```
+
+## Create a test table
+```shell script
+docker exec -it db-mysql mysql -uroot -proot testdb -e \
+  "CREATE TABLE audit_log ( \
+  id bigint NOT NULL AUTO_INCREMENT, \
+  message varchar(255) DEFAULT NULL, \
+  PRIMARY KEY (id));"
+```
 
 ## First run your application and send a message to make it crash
 ```shell script
