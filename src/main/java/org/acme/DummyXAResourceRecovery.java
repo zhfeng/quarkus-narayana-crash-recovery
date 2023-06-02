@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.transaction.xa.XAResource;
 
+import io.quarkus.narayana.jta.runtime.TransactionManagerConfiguration;
 import io.quarkus.runtime.Startup;
 import org.jboss.logging.Logger;
 import org.jboss.tm.XAResourceRecovery;
@@ -44,10 +45,15 @@ public class DummyXAResourceRecovery implements XAResourceRecovery {
     @Inject
     XAResourceRecoveryRegistry xaResourceRecoveryRegistry;
 
+    @Inject
+    TransactionManagerConfiguration tmConfig;
+
     @PostConstruct
     void init() {
-        LOG.info("register DummyXAResourceRecovery");
-        xaResourceRecoveryRegistry.addXAResourceRecovery(this);
+        if (tmConfig.enableRecovery) {
+            LOG.info("register DummyXAResourceRecovery");
+            xaResourceRecoveryRegistry.addXAResourceRecovery(this);
+        }
     }
 
     @Override
