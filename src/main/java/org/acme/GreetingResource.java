@@ -1,13 +1,13 @@
 package org.acme;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
+import jakarta.transaction.TransactionManager;
+import jakarta.transaction.Transactional;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.core.MediaType;
 import javax.sql.DataSource;
-import javax.transaction.TransactionManager;
-import javax.transaction.Transactional;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.core.MediaType;
 import java.sql.Connection;
 import java.sql.Statement;
 

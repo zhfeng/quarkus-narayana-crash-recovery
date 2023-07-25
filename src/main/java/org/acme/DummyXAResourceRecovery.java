@@ -19,12 +19,13 @@ package org.acme;
 import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.annotation.PostConstruct;
-import javax.inject.Inject;
-import javax.inject.Singleton;
+import jakarta.annotation.PostConstruct;
+import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javax.transaction.xa.XAResource;
 
 import io.quarkus.narayana.jta.runtime.TransactionManagerConfiguration;
@@ -61,15 +62,16 @@ public class DummyXAResourceRecovery implements XAResourceRecovery {
         List<DummyXAResource> resources;
         try {
             resources = getXAResourcesFromDirectory(DummyXAResource.LOG_DIR);
+            if (!resources.isEmpty()) {
+                LOG.info(DummyXAResourceRecovery.class.getSimpleName() + " returning list of resources: " + resources);
+            }
+            return resources.toArray(new XAResource[]{});
+        } catch (NoSuchFileException e) {
+            // ignore
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        if (!resources.isEmpty()) {
-            LOG.info(DummyXAResourceRecovery.class.getSimpleName() + " returning list of resources: " + resources);
-        }
-
-        return resources.toArray(new XAResource[]{});
+        return new XAResource[]{};
     }
 
     private List<DummyXAResource> getXAResourcesFromDirectory(String directory) throws IOException {

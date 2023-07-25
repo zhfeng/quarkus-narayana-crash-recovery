@@ -33,9 +33,11 @@ docker run --name db-mysql \
 
 docker exec -it db-mysql mysql -uroot -proot -e \
   "CREATE DATABASE testdb CHARACTER SET utf8mb4;
+   CREATE DATABASE tslog CHARACTER SET utf8mb4;
    CREATE USER 'admin'@'%' IDENTIFIED WITH mysql_native_password BY 'admin';
    GRANT ALL ON testdb.* TO 'admin'@'%';
    GRANT XA_RECOVER_ADMIN on *.* to 'admin'@'%';
+   GRANT ALL ON tslog.* TO 'admin'@'%';
    FLUSH PRIVILEGES;"
 ```
 
